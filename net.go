@@ -87,11 +87,67 @@ func (n *NeuralNet) FeedForward(inputs ...float64) error {
 	}
 
 	//Find each connection, and process
-	for i := 0; i < len(n.neurons); i++ {
+	for i := 0; i < len(n.neurons); i++ { //Process each layer sequentially (Don't do Multi-threading)
 		layer := n.neurons[i]
-		for j := 0; j < len(layer); j++ {
+		for _, neuron := range layer {
+			neuron.reset()
 
+			//TODO: Separate this into new threads
+			for _, syn := range n.connections { //TODO: Total Connections Variable that way we can
+				if syn.to == neuron {
+					syn.process()
+				}
+			}
 		}
 	}
+
+	//NOTE: This needs to looked at when we add a total connections variable
+	maxConnections := len(n.neurons[len(n.neurons)-1])
+	for _, out := range n.outputs {
+		conAm := 0
+		for _, syn := range n.connections {
+			if syn.to == out {
+				syn.process()
+			}
+
+			conAm++
+
+			if conAm >= maxConnections {
+				break
+			}
+		}
+	}
+
 	return nil
+}
+
+func (n *NeuralNet) GetSimplifiedOutputs() (outs []float64) {
+	for _, o := range n.outputs {
+		o.activationFunction()
+		outs = append(outs, o.sum)
+	}
+	return
+}
+
+func (n *NeuralNet) ConsoleDisplay() {
+	fmt.Print("Inputs:")
+	for _, i := range n.inputs {
+		fmt.Printf(" %f", i.sum)
+	}
+	fmt.Println()
+
+	for i := 0; i < len(n.neurons); i++ {
+		fmt.Printf("Layer %v:", i+1)
+		layer := n.neurons[i]
+		for _, neuron := range layer {
+			fmt.Printf(" %f", neuron.sum)
+		}
+	}
+	fmt.Println()
+
+	fmt.Print("Outputs:")
+	for _, i := range n.outputs {
+		fmt.Printf(" %f", i.sum)
+	}
+	fmt.Println()
 }
