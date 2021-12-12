@@ -5,8 +5,15 @@ import "math"
 type neuron struct {
 	id         int
 	sum        float64
-	layer      int
 	_activated bool //assigned by internal functions
+}
+
+func NewNeuronP(id int) *neuron {
+	return &neuron{
+		id,
+		0,
+		false,
+	}
 }
 
 func (n *neuron) reset() {
